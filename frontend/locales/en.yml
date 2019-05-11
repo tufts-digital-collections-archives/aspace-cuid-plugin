@@ -1,0 +1,6 @@
+en:
+  archival_object:
+    cuid: Collection Unique Identifier
+  validation_errors:
+    is_already_taken: is already taken.
+    has_already_been_used: has already been used.
