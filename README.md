@@ -6,8 +6,8 @@ Object ( a.k.a collection components ).
 
 ## Install
 
-First, **make a backup of your database and put it somewhere safe**. This
-plugin makes changes to the database.
+First, **make a backup of your database and put it somewhere safe**.
+This plugin makes changes to the database schema and updates your data!
 
 To install, just activate the plugin in your config/config.rb file by
 including an entry such as:
@@ -35,8 +35,15 @@ called `cuid_history` and adds a `cuid` field to the archival_object table. The
 cuid_history table ensures that any cuid's that are created are persisted
 beyond the life of the associated archival_object record.
 
-The script also adds cuids to the all the archival_object rows. This default
-cuid is constructed using the Resource identifier + a sequence number. 
+The setup-database.sh script will also add some pre-configured data to the cuid
+field. The default is to add the four-part Resource/Collection identifier with
+a sequence number that is counted off for the number of Archival
+Objects/Components that are associated to the Resource/Collection ( i.e.
+ABC-XYZ-999-888-1, ABC-XYZ-999-888-2, ... ). If you are planning on configuring
+the CUID formula, you should either modify the migration script ( located in
+[migrations/001_cuids.rb](https://github.com/tufts-digital-collections-archives/aspace-cuid-plugin/blob/master/migrations/001_cuids.rb#L31-L64) )
+to you desired values or update the database with your values after running the
+setup-database.sh migration.
 
 ## Configure
 
