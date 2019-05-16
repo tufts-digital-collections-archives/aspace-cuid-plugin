@@ -1,7 +1,7 @@
-ASPACE Collection Unique Identifier Plugin
+ASPACE Component Unique Identifier Plugin
 =========================================
 
-An ArchivesSpace plugin to generate unique collection identifier for Archival
+An ArchivesSpace plugin to generate a unique component identifier for Archival
 Object ( a.k.a collection components ).
 
 ## Install
@@ -31,12 +31,24 @@ Then run the database setup script to update your tables:
       scripts/setup-database.sh
 
 What this setup-database script does is adds an additional table to the schema
-called `cuid_history` and adds a `cuid` field to the archival_object table. The
-cuid_history table ensures that any cuid's that are created are persisted
+called `cuid_history`. The cuid_history table ensures that any cuid's that are created are persisted
 beyond the life of the associated archival_object record.
 
-The setup-database.sh script will also add some pre-configured data to the cuid
-field. The default is to add the four-part Resource/Collection identifier with
+The migration also puts a uniquness constraint on the
+archival_object.component_id field. Since this constraint did not previously
+exists, the process looks for duplicate component_id's and modifies them by
+appending a random hex. **If you don't want this to happen** you must check
+your data to ensure there are no duplicate component_id values in the
+archival_object table. Here's a SQL query that might help you find duplicates:
+
+```
+mysql> select component_id, count(*) as count from archival_object group by component_id having ( count(*) > 1 );
+```
+
+
+The `component_id` field is also made to be manditory and not allow empty
+values. The setup-database.sh script will add some pre-configured data to the
+component_id fields that are empty. The default is to add the four-part Resource/Collection identifier with
 a sequence number that is counted off for the number of Archival
 Objects/Components that are associated to the Resource/Collection ( i.e.
 ABC-XYZ-999-888-1, ABC-XYZ-999-888-2, ... ). If you are planning on configuring
@@ -70,7 +82,7 @@ AppConfig[:cuid_generator] = proc do
     .compact
     .join('-')
     sequence = Sequence.get("#{identifier}_components")
-    CuidHistory.create(cuid: "#{identifier}-#{sequence}", archival_object_id: json[:id])
+    CuidHistory.create(component_id: "#{identifier}.#{sequence}")
     "#{identifier}-#{sequence}"
   end
 end

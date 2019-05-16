@@ -18,7 +18,6 @@
   <%= hidden_field_tag "id", @archival_object.id %>
   <%= hidden_field_tag "uri", @archival_object.uri %>
 
-
   <% define_template("archival_object", jsonmodel_definition(:archival_object)) do |form| %>
     <section id="basic_information">
       <h4>
@@ -34,13 +33,12 @@
         <% else %>
           <%= form.label_with_field "ref_id", form.hidden_input("ref_id") + "<span class='identifier-display'><span class='identifier-display-part'>#{form.obj["ref_id"]}</span></span>".html_safe %>
         <% end %>
-        <% if form.obj["cuid"].blank? %>
-          <%= form.label_and_readonly "cuid", "<em>#{I18n.t("archival_object.ref_id_auto_generation_message")}</em>" %>
-        <% else %>
-          <%= form.label_and_textfield("cuid")%>
-        <% end %>
         <%= form.hidden_input "ref_id" %>
-        <%= form.label_and_textfield("component_id")%>
+        <% if form.obj["component_id"].blank? %>
+          <%= form.label_and_readonly "component_id", "<em>#{I18n.t("archival_object.component_id_auto_generation_message")}</em>" %>
+        <% else %>
+          <%= form.label_and_textfield("component_id") %>
+        <% end %>
         <%= form.label_and_select "level", form.possible_options_for("level", true) %>
         <%= form.label_and_textfield "other_level", :required => true %>
         <%= form.label_and_select "language", form.possible_options_for("language", true) %>

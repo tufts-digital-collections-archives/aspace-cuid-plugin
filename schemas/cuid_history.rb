@@ -5,7 +5,7 @@
     "version" => 1,
     "type" => "object",
     "properties" => {
-			"cuid_value" => {"type" => "string", "maxLength" => 8192, "ifmissing" => "error"},	
+			"component_id" => {"type" => "string", "maxLength" => 8192, "ifmissing" => "error"},	
     },
   },
 }
