@@ -31,12 +31,16 @@ Sequel.migration do
     self[:archival_object].select(:id, :component_id)
       .where(component_id:
              self[:archival_object]
-             .select_group(:component_id).having { count.function.* > 1 }).each do |row|
+             .select_group(:component_id).having { count.function.* > 1 })
+             .to_hash_groups(:component_id)
+             .each do |_id, rows|
 
-      component_id = "#{row[:component_id]}.#{SecureRandom.hex}-cuid"
-      $stderr.puts "Renaming #{row[:component_id]} to #{component_id} to ensure uniquness."
-      self[:archival_object].where(id: row[:id]).update(component_id: component_id)
-    end
+              rows.each_with_index do |row, i|
+                component_id = "#{row[:component_id]}-#{ format('%06d', i + 1)}"
+                puts "Renaming #{row[:component_id]} to #{component_id} to ensure uniquness."
+                self[:archival_object].where(id: row[:id]).update(component_id: component_id)
+              end
+            end
 
     # Ugly. But since the collection identifier is stored as json in the DB,
     # we need to go thru and parse it out
@@ -53,8 +57,7 @@ Sequel.migration do
                                           identifier = JSON.parse(row[:identifier]).compact.join('-')
                                           row[:identifier] = identifier
                                           # Count of all components associated to this collection
-                                          all = self[:archival_object].select(:id).where( root_record_id: row[:id] ).count
-                                          row[:count] = all
+                                          row[:count] = self[:archival_object].select(:id).where( root_record_id: row[:id] ).count
 
                                           row
                                         end
@@ -73,12 +76,14 @@ Sequel.migration do
       # were we start the index
       sequences << {sequence_name: "#{identifier}_components",
                     value: collection[:count]}
-      index = collection[:count] - done
-      unless index < 1
+      to_do = collection[:count] - done
+
+
+      unless to_do < 1
         self[:archival_object].select(:id)
             .where( root_record_id: collection[:id], component_id: nil )
             .each_with_index do |ao,i|
-              ao[:component_id] = "#{identifier}.#{ "%04d" % ( index + i )}"
+              ao[:component_id] = "#{identifier}.#{ format('%06d', ( done + i ))}"
               updates << ao
             end
       end
@@ -88,7 +93,7 @@ Sequel.migration do
       self[:sequence].multi_insert(sequences)
     end
 
-    # now lets add some CUIDS
+    # now lets add some CUIDS as a transaction.
     updates.each_slice(100) do |batch|
       self.transaction do
         batch.each do |row|
@@ -98,6 +103,8 @@ Sequel.migration do
     end
     
 
+    # now copy all our component_ids in the AO table into our cuid_history
+    # table.
     self[:cuid_history].import( 
                         [ :id, :archival_object_id, :component_id, :create_time,
                           :last_modified_by, :system_mtime, :user_mtime, :created_by], 
@@ -112,6 +119,7 @@ Sequel.migration do
                        :user_mtime,
                        :created_by) )
 
+    # finally, we're all done so let's add our unique constraint.
     alter_table(:archival_object) do
       add_unique_constraint([:component_id], name: 'cuid_uniq')
     end
