@@ -30,16 +30,13 @@ Then run the database setup script to update your tables:
       cd /path/to/archivesspace
       scripts/setup-database.sh
 
-What this setup-database script does is adds an additional table to the schema
-called `cuid_history`. The cuid_history table ensures that any cuid's that are created are persisted
-beyond the life of the associated archival_object record.
-
-The migration also puts a uniquness constraint on the
+The migration puts a uniquness constraint on the
 archival_object.component_id field. Since this constraint did not previously
 exists, the process looks for duplicate component_id's and modifies them by
-appending a random hex. **If you don't want this to happen** you must check
+appending a sequence number. **If you don't want this to happen** you must check
 your data to ensure there are no duplicate component_id values in the
-archival_object table. Here's a SQL query that might help you find duplicates:
+archival_object table prior to installing the plugin.
+Here's a SQL query that might help you find duplicates:
 
 ```
 mysql> select component_id, count(*) as count from archival_object group by component_id having ( count(*) > 1 );
@@ -78,12 +75,21 @@ AppConfig[:cuid_generator] = proc do
   proc do |json|
     resolved = URIResolver.resolve_references(json, ['resource'])
     identifier = %w[id_0 id_1 id_2 id_3]
-    .map { |id| resolved['resource']['_resolved'][id] }
-    .compact
-    .join('-')
-    sequence = Sequence.get("#{identifier}_components")
-    CuidHistory.create(component_id: "#{identifier}.#{sequence}")
-    "#{identifier}-#{sequence}"
+                 .map { |id| resolved['resource']['_resolved'][id] }
+                 .compact
+                 .join('-')
+
+    # we are using sequences, but it's also possible for someone to
+    # manually edit the CUID and use something that the sequence
+    # hasn't hit yet. So, when making a new sequence, lets try 100 times.
+    sequence = increment_component_sequence(identifier)
+    100.times do
+      break if where(component_id: "#{identifier}.#{sequence}").empty?
+
+      sequence = increment_component_sequence(identifier)
+    end
+
+    "#{identifier}.#{sequence}"
   end
 end
 ```

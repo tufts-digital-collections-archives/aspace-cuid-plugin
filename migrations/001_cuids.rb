@@ -6,18 +6,6 @@ Sequel.migration do
 
   up do
 
-    create_table(:cuid_history) do
-      primary_key :id
-      String :component_id, unique: true, null: false
-      Integer :archival_object_id
-      Integer :lock_version, default: 0, null: false
-      apply_mtime_columns
-    end
-
-    alter_table(:cuid_history) do
-      add_foreign_key([:archival_object_id], :archival_object, key: :id)
-    end
-
     puts "=" * 100
     puts "aspace-cuid-plugin: Adding the CUID column to the archival_objects table."
     puts "We will put in a default unique ID here to ensure the database intergrity."
@@ -36,7 +24,7 @@ Sequel.migration do
              .each do |_id, rows|
 
               rows.each_with_index do |row, i|
-                component_id = "#{row[:component_id]}-#{ format('%06d', i + 1)}"
+                component_id = "#{row[:component_id]}.#{ format('%06d', i + 1)}"
                 puts "Renaming #{row[:component_id]} to #{component_id} to ensure uniquness."
                 self[:archival_object].where(id: row[:id]).update(component_id: component_id)
               end
@@ -102,23 +90,6 @@ Sequel.migration do
       end
     end
     
-
-    # now copy all our component_ids in the AO table into our cuid_history
-    # table.
-    self[:cuid_history].import( 
-                        [ :id, :archival_object_id, :component_id, :create_time,
-                          :last_modified_by, :system_mtime, :user_mtime, :created_by], 
-                      self[:archival_object]
-                      .select(
-                       :id,
-                       Sequel.lit('`id`').as(:archival_object_id),
-                       :component_id,
-                       :create_time,
-                       :last_modified_by,
-                       :system_mtime,
-                       :user_mtime,
-                       :created_by) )
-
     # finally, we're all done so let's add our unique constraint.
     alter_table(:archival_object) do
       add_unique_constraint([:component_id], name: 'cuid_uniq')
