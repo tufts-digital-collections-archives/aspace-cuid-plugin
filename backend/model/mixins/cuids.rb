@@ -25,9 +25,9 @@ module Cuids
   module ClassMethods
     # We use the existing sequence functionality in ASPACE. Keeping track of
     # the counting off the number of components in a collection
+    # ( also we don't want 0 so always +1 to sequence )
     def increment_component_sequence(identifier)
-      sequence = format('%06d', Sequence.get("#{identifier}_components"))
-      sequence != 0 ? sequence : increment_component_sequence(identifier)
+      format('%06d', Sequence.get("#{identifier}_components") + 1)
     end
 
     def cuid_generator
