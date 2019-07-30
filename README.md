@@ -48,7 +48,7 @@ values. The setup-database.sh script will add some pre-configured data to the
 component_id fields that are empty. The default is to add the four-part Resource/Collection identifier with
 a sequence number that is counted off for the number of Archival
 Objects/Components that are associated to the Resource/Collection ( i.e.
-ABC-XYZ-999-888-1, ABC-XYZ-999-888-2, ... ). If you are planning on configuring
+ABC-XYZ-999-888.0000001, ABC-XYZ-999-888-0000002, ... ). If you are planning on configuring
 the CUID formula, you should either modify the migration script ( located in
 [migrations/001_cuids.rb](https://github.com/tufts-digital-collections-archives/aspace-cuid-plugin/blob/master/migrations/001_cuids.rb#L31-L64) )
 to you desired values or update the database with your values after running the
@@ -58,8 +58,8 @@ setup-database.sh migration.
 
 If you would like to build the sequence in a slightly different way, you can
 modify the AppConfig[:cuid_generator] setting in the config.rb file.  
-This just to be a proc that returns a proc that accecpts the json for the
-archival_object.
+This just needs to be a proc that returns a proc that accepts the json for the
+archival_object and returns a string.
 
 ```
   AppConfig[:cuid_generator] = proc do
@@ -67,8 +67,8 @@ archival_object.
   end
 ```
 
-If you want to use a sequence number, you can use the ArchivesSpace sequence
-functionality:
+If you want to use a sequential number, you can use the ArchivesSpace
+sequence functionality:
 
 ```
 AppConfig[:cuid_generator] = proc do
@@ -81,7 +81,8 @@ AppConfig[:cuid_generator] = proc do
 
     # we are using sequences, but it's also possible for someone to
     # manually edit the CUID and use something that the sequence
-    # hasn't hit yet. So, when making a new sequence, lets try 100 times.
+    # hasn't hit yet. So, when making a new sequence, lets try up-to
+    # 100 times.
     sequence = increment_component_sequence(identifier)
     100.times do
       break if where(component_id: "#{identifier}.#{sequence}").empty?
