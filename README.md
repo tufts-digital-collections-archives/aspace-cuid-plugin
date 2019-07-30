@@ -2,7 +2,7 @@ ASPACE Component Unique Identifier Plugin
 =========================================
 
 An ArchivesSpace plugin to generate a unique component identifier for Archival
-Object ( a.k.a collection components ).
+Objects ( a.k.a collection components).
 
 ## Install
 
@@ -30,9 +30,9 @@ Then run the database setup script to update your tables:
       cd /path/to/archivesspace
       scripts/setup-database.sh
 
-The migration puts a uniquness constraint on the
+The migration puts a uniqueness constraint on the
 archival_object.component_id field. Since this constraint did not previously
-exists, the process looks for duplicate component_id's and modifies them by
+exist, the process looks for duplicate component_ids and modifies them by
 appending a sequence number. **If you don't want this to happen** you must check
 your data to ensure there are no duplicate component_id values in the
 archival_object table prior to installing the plugin.
@@ -43,15 +43,15 @@ mysql> select component_id, count(*) as count from archival_object group by comp
 ```
 
 
-The `component_id` field is also made to be manditory and not allow empty
+The `component_id` field is also made to be mandatory and not allow empty
 values. The setup-database.sh script will add some pre-configured data to the
 component_id fields that are empty. The default is to add the four-part Resource/Collection identifier with
 a sequence number that is counted off for the number of Archival
-Objects/Components that are associated to the Resource/Collection ( i.e.
-ABC-XYZ-999-888.0000001, ABC-XYZ-999-888-0000002, ... ). If you are planning on configuring
-the CUID formula, you should either modify the migration script ( located in
+Objects/Components that are associated to the Resource/Collection (i.e.
+ABC-XYZ-999-888.0000001, ABC-XYZ-999-888.0000002, ... ). If you are planning on configuring
+the CUID formula, you should either modify the migration script (located in
 [migrations/001_cuids.rb](https://github.com/tufts-digital-collections-archives/aspace-cuid-plugin/blob/master/migrations/001_cuids.rb#L31-L64) )
-to you desired values or update the database with your values after running the
+to your desired values or update the database with your values after running the
 setup-database.sh migration.
 
 ## Configure
@@ -81,7 +81,7 @@ AppConfig[:cuid_generator] = proc do
 
     # we are using sequences, but it's also possible for someone to
     # manually edit the CUID and use something that the sequence
-    # hasn't hit yet. So, when making a new sequence, lets try up-to
+    # hasn't hit yet. So, when making a new sequence, let's try up-to
     # 100 times.
     sequence = increment_component_sequence(identifier)
     100.times do
