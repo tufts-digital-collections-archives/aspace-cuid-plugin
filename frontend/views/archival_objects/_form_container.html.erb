@@ -40,8 +40,9 @@
           <%= form.label_and_textfield("component_id") %>
         <% end %>
         <%= form.label_and_select "level", form.possible_options_for("level", true) %>
-        <%= form.label_and_textfield "other_level", :required => true %>
-        <%= form.label_and_select "language", form.possible_options_for("language", true) %>
+        <%= form.label_and_textfield "other_level", :required => true %> 
+		<%= render_aspace_partial :partial => "shared/subrecord_form", :locals => {:form => form, :name => "lang_materials", :custom_action_template => "lang_materials/subrecord_form_action"} %>
+
         <div class="form-group">
           <%= form.label "publish", :class => 'control-label col-sm-2' %>
           <div class="checkbox col-sm-9">
